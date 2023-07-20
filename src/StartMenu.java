@@ -82,7 +82,8 @@ public class StartMenu extends JFrame{
 	    	if (event.getActionCommand() == "100 Mode") {
 	    		setVisible(false);
 	    		setRunning(true);
-	    		run = new Board(100);
+	    		run = new Board(10);
+				//TODO switch to 100
 	    	}
 			if (event.getActionCommand() == "Endless Mode") {
 				setVisible(false);

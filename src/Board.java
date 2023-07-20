@@ -40,6 +40,7 @@ public class Board extends JPanel {
 	private long backgroundResetTimer = 0;
 	private boolean firstCollision = false;
 	private int count = 0;
+	private int endlessCounter = 0;
 	private int counter = 0;
 	private int numBurgers;
 	public static int burgsMissed = 0;
@@ -69,7 +70,7 @@ public class Board extends JPanel {
 	}
 
 	public Board() {
-		this.numBurgers = 10;	//arbitrary number just to have some to remove and add more'
+		this.numBurgers = 10;	//arbitrary number just to have some to remove and add more
 		burgerCoords = new int[numBurgers];
 		endless = true;
 		initBoard();
@@ -82,9 +83,6 @@ public class Board extends JPanel {
 	//}
 
 	private void initBoard() {
-
-
-
 		label = new JLabel("Burgers remaining: " + numBurgers +" || Burgers missed: " + burgsMissed);
 		label.setHorizontalAlignment(SwingConstants.CENTER);
 		label.setBackground(Color.black);
@@ -142,64 +140,55 @@ public class Board extends JPanel {
 		}
 	}
 	private void initBurgers() {
-
-		//if (endless == false) {
-			burgers = new ArrayList<>();
-			for (int i = 0; i <= numBurgers - 1; i++) {
-				random = rand.nextInt(B_WIDTH - burger.getWidth());
-				burgerCoords[i] = random;
-				burgers.add(new Burgers(burgerCoords[i], 0));
-			}
-		//}
-
+		burgers = new ArrayList<>();
+		for (int i = 0; i <= numBurgers - 1; i++) {
+			random = rand.nextInt(B_WIDTH - burger.getWidth() - 10);
+			burgerCoords[i] = random;
+			burgers.add(new Burgers(burgerCoords[i], 0));
+		}
 	}
 
 	public void updateBurgers() {
-
-		//TODO THE FOLLOWING LOGIC IS WHAT STOPS ENDLESS MODE
 		//counter just to count number of burgers dropped. countI to count number of burgers either caught or missed.
-		//count is used to increment up to number of burgers???????????????
+		//count is incremented every one second
 		if (!endless) {
 			if (counter == count && counter < numBurgers) {        //send another burger from the top once timer increments
 				burgers.get(counter - countI).setStarted(true);
 				counter++;
 			}
-		} else {	//if playing endless mode
-			if (counter == count) {
-				if (counter == numBurgers) {	//do not increment
-					burgers.get(counter-1).setStarted(true);
-				} else if (counter < numBurgers) {
-					System.out.println("counter:     " + counter + "     burgers size:    " + burgers.size());
-					burgers.get(counter - countI).setStarted(true);
-					counter++;
+		} else {    //if playing endless mode
+			int burgerToMove = 0;
+			for (int i = 0; i < burgers.size(); i++) {    //to set the first non STARTED burger to move down screen
+				if (!burgers.get(i).isStarted) {
+					burgerToMove = i;
+					break;
 				}
+			}
+			if (counter == count) {	//every second
+				burgers.get(burgerToMove).setStarted(true);
+				counter++;
 			}
 		}
 
 		for (int i = 0; i < burgers.size(); i++) {
-			//System.out.println(("Number: "+ i + "     " + burgers.get(i).isStarted()));
 			if (burgers.get(i).isStarted && burgers.get(i).isVisible()) {
 				burgers.get(i).move(B_HEIGHT);
 			} else {
 				if (burgers.get(i).isVisible() == false) {
 					burgers.remove(i);
-					//System.out.println(burgers.size());
 					if (endless) {	// add another to keep rotating until 3 were missed
 						//if (burgsMissed < 3) {
-						//System.out.println("I am here");
-							random = rand.nextInt(B_WIDTH - burger.getWidth());
-							//burgerCoords[i] = random;
+							random = rand.nextInt(B_WIDTH - burger.getWidth() - 10);
 							burgers.add(new Burgers(random, 0));
-						//System.out.println(burgers.size());
 
 						//} else {
-							//END GAME 3 WERE MISSED
+						//TODO  END GAME SCREEN SHOW STATS / PLAY AGAIN / EXIT GAME
+							//END GAME SCREEN SHOW STATS / PLAY AGAIN / EXIT GAME
 						//}
 					}
 				}
 			}
 		}
-		//System.out.println("\n\n\n");
 	}
 
 	private void updateMouth() {
@@ -225,25 +214,22 @@ public class Board extends JPanel {
 			if (firstCollision == true && System.currentTimeMillis() < collideTimer + 200) {
 				g.drawImage(cMouth.getImage(), mouth.getX(), mouth.getY(), this);
 				collideChecked = true;
-//				if (System.currentTimeMillis() < collideTimer + 50) {
-//					this.setBackground(Color.red);
-//				}
 			} else {
 				g.drawImage(mouth.getImage(), mouth.getX(), mouth.getY(), this);
 				collideChecked = false;
-				//this.setBackground(Color.black);
 			}
 
-			for (Burgers burg : burgers) {
-				if (burg.isStarted && burg.isVisible()) {
-					g.drawImage(burg.getImage(), burg.getX(), burg.getY(), this);
+			for (int i = 0; i < burgers.size(); i++) {
+				if (burgers.get(i).isStarted && burgers.get(i).isVisible()) {
+					g.drawImage(burgers.get(i).getImage(), burgers.get(i).getX(), burgers.get(i).getY(), this);
 				}
 			}
-			//if (!endless) {
+
+			if (!endless) {
 				label.setText("Burgers remaining: " + burgers.size() + " || Burgers missed: " + burgsMissed);
-			//} else {
-				//label.setText("Burgers missed: " + burgsMissed);
-			//}
+			} else {
+				label.setText("Burgers missed: " + burgsMissed);
+			}
 
 
 			Toolkit.getDefaultToolkit().sync();
@@ -282,6 +268,7 @@ public class Board extends JPanel {
 				countI++;
 				burg.setVisible(false);
 				firstCollision = true;
+
 				if (collideChecked == false) {
 					collideTimer = System.currentTimeMillis();
 				}
@@ -296,7 +283,6 @@ public class Board extends JPanel {
 					AudioInputStream audioIn = AudioSystem.getAudioInputStream(new File("res/miss.wav"));
 					Clip clip = AudioSystem.getClip();
 					clip.open(audioIn);
-//					clip.loop(10);
 					clip.start();
 
 				} catch (UnsupportedAudioFileException e) {
@@ -306,7 +292,6 @@ public class Board extends JPanel {
 				} catch (LineUnavailableException e) {
 					e.printStackTrace();
 				}
-//				this.setBackground(Color.red);
 			}
 
 		}
@@ -336,9 +321,14 @@ public class Board extends JPanel {
 
 		@Override
 		public void run() {
-			if (count < numBurgers) {
-				count++;
-			}
+			if (!endless) {
+				if (count < numBurgers) {
+					count++;
+				}
+			} else {
+					count++;
+				}
+
 		}
 
 	}
