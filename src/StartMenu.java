@@ -46,20 +46,19 @@ public class StartMenu extends JFrame{
 		start100Button.setBounds(oneHundred.x, oneHundred.y, 300, 150);
 
 		endlessButton = new JButton();
-		endless = new menuChoices("res/endlessmodeBorder.png",150,350);
+		endless = new menuChoices("res/endlessmodeBorder.png",150,200);
 		endlessButton.setIcon(new ImageIcon(endless.image));
 		endlessButton.setActionCommand("Endless Mode");
 		endlessButton.addActionListener(bListen);
 		endlessButton.setBounds(endless.x, endless.y, 300, 150);
 
-
-		exitButton = new JButton("Exit Game");
+		exitButton = new JButton();
+		exit = new menuChoices("res/burgBorderX.png",150,375);
+		exitButton.setIcon(new ImageIcon(exit.image));
+		exitButton.setActionCommand("Exit Game");
 		exitButton.addActionListener(bListen);
-		exitButton.setBounds(150, 500, 300, 50);
-		exitButton.setBackground(Color.red);
-		//start100Button.setBackground(Color.black);
-		//startButton.setForeground(Color.white);
-		//exitButton.setForeground(Color.white);
+		exitButton.setBounds(exit.x, exit.y, 300, 150);
+
 		JPanel panel = new JPanel();
 		panel.add(endlessButton);
 		panel.add(start100Button);
@@ -82,8 +81,7 @@ public class StartMenu extends JFrame{
 	    	if (event.getActionCommand() == "100 Mode") {
 	    		setVisible(false);
 	    		setRunning(true);
-	    		run = new Board(10);
-				//TODO switch to 100
+	    		run = new Board(100);
 	    	}
 			if (event.getActionCommand() == "Endless Mode") {
 				setVisible(false);

@@ -1,19 +1,19 @@
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.*;
+import java.awt.event.*;
 
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
+import javax.swing.*;
 
 @SuppressWarnings("serial")
 public class EscapeMenu extends JFrame{
+	private boolean bgMusicToggle=true, eatSoundToggle=true, missSoundToggle=true;	//true for on false for off
+	private JCheckBox bgMusic, eatSound, missSound;
+	private JPanel bgMusicWrap, eatSoundWrap, missSoundWrap;	//wrappers to help the GUI for checkboxes
+	private JButton resumeButton;
+	private JButton exitButton;
+	private JFrame frame;
 
-	public JButton resumeButton;	
-	public JButton returnButton;	
-
-	public EscapeMenu() {
+	public EscapeMenu(JFrame frame) {
+		this.frame = frame;
 		initMenu();
 	}
 
@@ -24,21 +24,51 @@ public class EscapeMenu extends JFrame{
 		setVisible(true);
 		this.setLocationRelativeTo(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		JButton startButton = new JButton("Resume Game");
+		resumeButton = new JButton("Resume Game");
 		bListener bListen = new bListener();
-		startButton.addActionListener(bListen);
-		startButton.setBounds(150, 50, 300, 200);
-		JButton exitButton = new JButton("Return to Menu");
-		exitButton.addActionListener(bListen);
+		iListener iListen = new iListener();
+		resumeButton.addActionListener(bListen);
+		resumeButton.setBounds(150, 50, 300, 190);
 
-		exitButton.setBounds(150, 300, 300, 200);
+		exitButton = new JButton("Exit Game");
+		exitButton.addActionListener(bListen);
+		exitButton.setBounds(150, 280, 300, 190);
 		exitButton.setBackground(Color.red);
-		startButton.setBackground(Color.green);
-		startButton.setForeground(Color.white);
+		resumeButton.setBackground(Color.green);
+		resumeButton.setForeground(Color.white);
 		exitButton.setForeground(Color.white);
+
+		bgMusic = new JCheckBox();
+		bgMusic.setName("BgMusic");
+		bgMusic.addItemListener(iListen);
+		bgMusicWrap = new JPanel();
+		bgMusicWrap.add(new JLabel("Disable Music"));
+		bgMusicWrap.add(bgMusic);
+		bgMusicWrap.setBounds(30, 500, 160, 30);
+
+		eatSound = new JCheckBox();
+		eatSound.setName("eatSound");
+		eatSound.addItemListener(iListen);
+		eatSoundWrap = new JPanel();
+		eatSoundWrap.add(new JLabel("Disable Eat Sound"));
+		eatSoundWrap.add(eatSound);
+		eatSoundWrap.setBounds(220, 500, 160, 30);
+
+		missSound = new JCheckBox();
+		missSound.setName("missSound");
+		missSound.addItemListener(iListen);
+		missSoundWrap = new JPanel();
+		missSoundWrap.add(new JLabel("Disable Miss Sound"));
+		missSoundWrap.add(missSound);
+		missSoundWrap.setBounds(410, 500, 160, 30);
+
+
 		JPanel panel = new JPanel();
-		panel.add(startButton);
+		panel.add(resumeButton);
 		panel.add(exitButton);
+		panel.add(bgMusicWrap);
+		panel.add(eatSoundWrap);
+		panel.add(missSoundWrap);
 		panel.setLayout(null);
 		panel.setBackground(Color.black);
 		this.add(panel);
@@ -48,12 +78,51 @@ public class EscapeMenu extends JFrame{
 	    public void actionPerformed(ActionEvent event){
 	    	if (event.getActionCommand() == "Resume Game") {
 	    		setVisible(false);
-	    		BoardRun test = new BoardRun();
-	    		test.setVisible(true);
+				resumeGame(frame);
 	    	}
 	    	else if (event.getActionCommand() == "Exit Game") {
 	    		System.exit(0);
 	    	}
 	    }
+	}
+
+	private class iListener implements ItemListener{
+		@Override
+		public void itemStateChanged(ItemEvent e) {
+			JCheckBox temp = (JCheckBox)e.getSource();
+			String checkboxName = temp.getName();
+			if (e.getStateChange() == ItemEvent.SELECTED) {
+				if (checkboxName.equals("BgMusic")) {
+					bgMusicToggle = false;
+				} else if(checkboxName.equals("missSound")) {
+					missSoundToggle = false;
+				} else {
+					eatSoundToggle = false;
+				}
+			} else {
+				if (checkboxName.equals("BgMusic")) {
+					bgMusicToggle = true;
+				} else if(checkboxName.equals("missSound")) {
+					missSoundToggle = true;
+				} else {
+					eatSoundToggle = true;
+				}
+			}
+			Board.updateSettings();
+		}
+	}
+
+	public void resumeGame(JFrame frame) {
+		this.setVisible(false);
+		frame.setVisible(true);
+		StartMenu.setRunning(true);
+	}
+
+	public boolean isBgMusicToggle() {return bgMusicToggle;}
+	public boolean isEatSoundToggle() {return eatSoundToggle;}
+	public boolean isMissSoundToggle() {return missSoundToggle;}
+
+	public void setBgMusic(boolean set) {
+		bgMusicToggle = set;
 	}
 }

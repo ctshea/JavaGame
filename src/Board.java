@@ -43,15 +43,18 @@ public class Board extends JPanel {
 	private int endlessCounter = 0;
 	private int counter = 0;
 	private int numBurgers;
+	private int burgsCaught = 0;
 	public static int burgsMissed = 0;
+	private int burgsRemaining = 100;
 	private int countI = 0;
 	private boolean isPaused = false;
 	private boolean endless = false;
+	private static Clip clip;
 	
 	public static EscapeMenu options;
+	public static EndScreen endScreen;
 
-
-	private JFrame frame;
+	public static JFrame frame;
 	private JLabel label;
 	Timer burgTimer;
 	private Timer timer;
@@ -108,8 +111,9 @@ public class Board extends JPanel {
 		this.add(label, BorderLayout.SOUTH);
 		frame.add(this);
 		
-		options = new EscapeMenu();
+		options = new EscapeMenu(frame);
 		options.setVisible(false);
+
 
 		mouth = new Mouth(0, 0);
 		burger = new Burgers(0, 0);
@@ -126,7 +130,7 @@ public class Board extends JPanel {
 	private void startBGMusic() {
 		try {
 			AudioInputStream audioIn = AudioSystem.getAudioInputStream(new File("res/bgmusic.wav"));
-			Clip clip = AudioSystem.getClip();
+			clip = AudioSystem.getClip();
 			clip.open(audioIn);
 			clip.loop(Clip.LOOP_CONTINUOUSLY);
 			clip.start();
@@ -148,12 +152,14 @@ public class Board extends JPanel {
 		}
 	}
 
+
 	public void updateBurgers() {
 		//counter just to count number of burgers dropped. countI to count number of burgers either caught or missed.
 		//count is incremented every one second
 		if (!endless) {
 			if (counter == count && counter < numBurgers) {        //send another burger from the top once timer increments
 				burgers.get(counter - countI).setStarted(true);
+				burgsRemaining--;
 				counter++;
 			}
 		} else {    //if playing endless mode
@@ -176,15 +182,20 @@ public class Board extends JPanel {
 			} else {
 				if (burgers.get(i).isVisible() == false) {
 					burgers.remove(i);
-					if (endless) {	// add another to keep rotating until 3 were missed
-						//if (burgsMissed < 3) {
-							random = rand.nextInt(B_WIDTH - burger.getWidth() - 10);
-							burgers.add(new Burgers(random, 0));
-
-						//} else {
-						//TODO  END GAME SCREEN SHOW STATS / PLAY AGAIN / EXIT GAME
-							//END GAME SCREEN SHOW STATS / PLAY AGAIN / EXIT GAME
-						//}
+					random = rand.nextInt(B_WIDTH - burger.getWidth() - 10);
+					burgers.add(new Burgers(random, 0));
+					if (burgsMissed >= 3 && endless) {
+						StartMenu.setRunning(false);
+						frame.setVisible(false);
+						options.setBgMusic(false);
+						endScreen = new EndScreen(frame, burgsCaught);
+						endScreen.setVisible(true);
+						} else if (!endless && burgsRemaining == 0){
+						StartMenu.setRunning(false);
+						frame.setVisible(false);
+						options.setBgMusic(false);
+						endScreen = new EndScreen(frame, burgsCaught);
+						endScreen.setVisible(true);
 					}
 				}
 			}
@@ -226,7 +237,7 @@ public class Board extends JPanel {
 			}
 
 			if (!endless) {
-				label.setText("Burgers remaining: " + burgers.size() + " || Burgers missed: " + burgsMissed);
+				label.setText("Burgers remaining: " + burgsRemaining + " || Burgers missed: " + burgsMissed+ " || Burgers caught: " + burgsCaught);
 			} else {
 				label.setText("Burgers missed: " + burgsMissed);
 			}
@@ -234,6 +245,15 @@ public class Board extends JPanel {
 
 			Toolkit.getDefaultToolkit().sync();
 		}
+	}
+
+	public static void updateSettings() {
+		if (!options.isBgMusicToggle()) {
+			clip.stop();
+		} else {
+			clip.start();
+		}
+
 	}
 
 	public void setBackgroundColor() {
@@ -252,6 +272,8 @@ public class Board extends JPanel {
 		for (Burgers burg : burgers) {
 			Rectangle r2 = burg.getBounds();
 			if (r1.intersects(r2)) {
+				burgsCaught++;
+				if (options.isEatSoundToggle()) {
 				try {
 					AudioInputStream audioIn = AudioSystem.getAudioInputStream(new File("res/wow.wav"));
 					Clip clip = AudioSystem.getClip();
@@ -264,6 +286,7 @@ public class Board extends JPanel {
 				} catch (LineUnavailableException e) {
 					e.printStackTrace();
 				}
+			}
 				label.setText(String.valueOf(countI + 1));
 				countI++;
 				burg.setVisible(false);
@@ -279,18 +302,20 @@ public class Board extends JPanel {
 				burg.setVisible(false);
 				burgsMissed += 1;
 				backgroundResetTimer = System.currentTimeMillis();
-				try {
-					AudioInputStream audioIn = AudioSystem.getAudioInputStream(new File("res/miss.wav"));
-					Clip clip = AudioSystem.getClip();
-					clip.open(audioIn);
-					clip.start();
+				if (options.isMissSoundToggle()) {
+					try {
+						AudioInputStream audioIn = AudioSystem.getAudioInputStream(new File("res/miss.wav"));
+						Clip clip = AudioSystem.getClip();
+						clip.open(audioIn);
+						clip.start();
 
-				} catch (UnsupportedAudioFileException e) {
-					e.printStackTrace();
-				} catch (IOException e) {
-					e.printStackTrace();
-				} catch (LineUnavailableException e) {
-					e.printStackTrace();
+					} catch (UnsupportedAudioFileException e) {
+						e.printStackTrace();
+					} catch (IOException e) {
+						e.printStackTrace();
+					} catch (LineUnavailableException e) {
+						e.printStackTrace();
+					}
 				}
 			}
 
@@ -304,15 +329,10 @@ public class Board extends JPanel {
 			int key = e.getKeyCode();
 			if (key == e.VK_ESCAPE) {
 				StartMenu.setRunning(false);
-				//frame.setVisible(false);
-				isPaused = true;
-				//options.setVisible(true);
+				frame.setVisible(false);
+				//isPaused = true;
+				options.setVisible(true);
 			}
-			if (key == e.VK_SPACE) {
-				StartMenu.setRunning(true);
-			}
-			
-			
 			mouth.keyPressed(e);
 		}
 	}
@@ -321,14 +341,16 @@ public class Board extends JPanel {
 
 		@Override
 		public void run() {
-			if (!endless) {
-				if (count < numBurgers) {
-					count++;
-				}
-			} else {
+			if (StartMenu.isRunning()) {
+				if (!endless) {
+					if (count < numBurgers) {
+						count++;
+					}
+				} else {
 					count++;
 				}
 
+			}
 		}
 
 	}
@@ -343,12 +365,7 @@ public class Board extends JPanel {
 				repaint();
 				setBackgroundColor();
 			}
-
-			// else if(!StartMenu.isRunning()) {
-			// timer.cancel();
-			// }
 		}
 
 	}
-
 }
